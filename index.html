@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户留言系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+        body {
+            background-color: #f5f7fa;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+        }
+        .title {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+        /* 用户区域样式 */
+        .user-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+        .user-info {
+            color: #2c3e50;
+            font-size: 16px;
+        }
+        .logout-btn {
+            padding: 6px 12px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .logout-btn:hover {
+            background: #c0392b;
+        }
+        /* 登录注册表单样式 */
+        .auth-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+        .auth-form input {
+            flex: 1;
+            min-width: 120px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            outline: none;
+        }
+        .auth-form input:focus {
+            border-color: #3498db;
+        }
+        .auth-btn {
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .auth-btn:hover {
+            background: #2980b9;
+        }
+        /* 留言发布区域 */
+        .msg-publish {
+            margin-bottom: 30px;
+        }
+        .msg-textarea {
+            width: 100%;
+            height: 100px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            resize: none;
+            outline: none;
+            margin-bottom: 10px;
+            font-size: 15px;
+        }
+        .msg-textarea:focus {
+            border-color: #3498db;
+        }
+        .publish-btn {
+            padding: 8px 25px;
+            background: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            float: right;
+        }
+        .publish-btn:hover {
+            background: #27ae60;
+        }
+        /* 留言列表样式 */
+        .msg-list {
+            clear: both;
+            margin-top: 20px;
+        }
+        .msg-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 10px;
+        }
+        .msg-user {
+            color: #3498db;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .msg-time {
+            color: #999;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        .msg-content {
+            color: #333;
+            line-height: 1.6;
+            margin-top: 5px;
+        }
+        .empty-tip {
+            text-align: center;
+            color: #999;
+            padding: 40px 0;
+        }
+        /* 提示文字 */
+        .tip {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">用户留言系统</h1>
+
+        <!-- 用户登录状态区域 -->
+        <div class="user-area" id="userArea">
+            <div class="user-info" id="userInfo">请先登录或注册</div>
+            <button class="logout-btn" id="logoutBtn" style="display: none;">退出登录</button>
+        </div>
+
+        <!-- 登录注册表单 -->
+        <div class="auth-form" id="authForm">
+            <input type="text" id="username" placeholder="请输入用户名" required>
+            <input type="password" id="password" placeholder="请输入密码" required>
+            <button class="auth-btn" id="loginBtn">登录</button>
+            <button class="auth-btn" id="registerBtn">注册</button>
+        </div>
+
+        <!-- 留言发布区域 -->
+        <div class="msg-publish">
+            <p class="tip">发布留言（需登录后才能发布）：</p>
+            <textarea class="msg-textarea" id="msgContent" placeholder="请输入留言内容..."></textarea>
+            <button class="publish-btn" id="sendMsgBtn">发布留言</button>
+        </div>
+
+        <!-- 留言列表区域 -->
+        <div class="msg-list" id="msgList">
+            <div class="empty-tip">暂无留言，快来发布第一条留言吧~</div>
+        </div>
+    </div>
+
+    <script>
+        // 本地存储键名定义
+        const USER_KEY = 'userSystem_users';
+        const MSG_KEY = 'userSystem_messages';
+        const LOGIN_USER_KEY = 'login_user';
+
+        // 初始化DOM元素
+        const userInfoEl = document.getElementById('userInfo');
+        const logoutBtnEl = document.getElementById('logoutBtn');
+        const authFormEl = document.getElementById('authForm');
+        const usernameEl = document.getElementById('username');
+        const passwordEl = document.getElementById('password');
+        const loginBtnEl = document.getElementById('loginBtn');
+        const registerBtnEl = document.getElementById('registerBtn');
+        const msgContentEl = document.getElementById('msgContent');
+        const sendMsgBtnEl = document.getElementById('sendMsgBtn');
+        const msgListEl = document.getElementById('msgList');
+
+        // 页面加载时初始化数据和状态
+        window.onload = function() {
+            initStorage();
+            checkLoginStatus();
+            renderMessageList();
+        };
+
+        // 初始化本地存储（防止为空）
+        function initStorage() {
+            if (!localStorage.getItem(USER_KEY)) localStorage.setItem(USER_KEY, JSON.stringify([]));
+            if (!localStorage.getItem(MSG_KEY)) localStorage.setItem(MSG_KEY, JSON.stringify([]));
+        }
+
+        // 检查登录状态
+        function checkLoginStatus() {
+            const loginUser = localStorage.getItem(LOGIN_USER_KEY);
+            if (loginUser) {
+                userInfoEl.innerText = `当前登录用户：${loginUser}`;
+                logoutBtnEl.style.display = 'block';
+                authFormEl.style.display = 'none';
+            } else {
+                userInfoEl.innerText = '请先登录或注册';
+                logoutBtnEl.style.display = 'none';
+                authFormEl.style.display = 'flex';
+            }
+        }
+
+        // 注册功能
+        registerBtnEl.onclick = function() {
+            const username = usernameEl.value.trim();
+            const password = passwordEl.value.trim();
+            if (!username || !password) {
+                alert('用户名和密码不能为空！');
+                return;
+            }
+            const users = JSON.parse(localStorage.getItem(USER_KEY));
+            const userExist = users.some(item => item.username === username);
+            if (userExist) {
+                alert('该用户名已被注册！');
+                return;
+            }
+            users.push({ username, password });
+            localStorage.setItem(USER_KEY, JSON.stringify(users));
+            alert('注册成功，请登录！');
+            usernameEl.value = '';
+            passwordEl.value = '';
+        };
+
+        // 登录功能
+        loginBtnEl.onclick = function() {
+            const username = usernameEl.value.trim();
+            const password = passwordEl.value.trim();
+            if (!username || !password) {
+                alert('用户名和密码不能为空！');
+                return;
+            }
+            const users = JSON.parse(localStorage.getItem(USER_KEY));
+            const targetUser = users.find(item => item.username === username && item.password === password);
+            if (!targetUser) {
+                alert('用户名或密码错误！');
+                return;
+            }
+            localStorage.setItem(LOGIN_USER_KEY, username);
+            alert('登录成功！');
+            checkLoginStatus();
+            usernameEl.value = '';
+            passwordEl.value = '';
+        };
+
+        // 退出登录
+        logoutBtnEl.onclick = function() {
+            localStorage.removeItem(LOGIN_USER_KEY);
+            alert('退出登录成功！');
+            checkLoginStatus();
+        };
+
+        // 发布留言
+        sendMsgBtnEl.onclick = function() {
+            const loginUser = localStorage.getItem(LOGIN_USER_KEY);
+            if (!loginUser) {
+                alert('请先登录再发布留言！');
+                return;
+            }
+            const content = msgContentEl.value.trim();
+            if (!content) {
+                alert('留言内容不能为空！');
+                return;
+            }
+            const messages = JSON.parse(localStorage.getItem(MSG_KEY));
+            const newMsg = {
+                username: loginUser,
+                content: content,
+                time: new Date().toLocaleString()
+            };
+            messages.unshift(newMsg); // 最新留言在最上方
+            localStorage.setItem(MSG_KEY, JSON.stringify(messages));
+            msgContentEl.value = '';
+            renderMessageList();
+            alert('留言发布成功！');
+        };
+
+        // 渲染留言列表
+        function renderMessageList() {
+            const messages = JSON.parse(localStorage.getItem(MSG_KEY));
+            if (messages.length === 0) {
+                msgListEl.innerHTML = '<div class="empty-tip">暂无留言，快来发布第一条留言吧~</div>';
+                return;
+            }
+            let html = '';
+            messages.forEach(item => {
+                html += `
+                    <div class="msg-item">
+                        <div class="msg-user">
+                            ${item.username}
+                            <span class="msg-time">${item.time}</span>
+                        </div>
+                        <div class="msg-content">${item.content}</div>
+                    </div>
+                `;
+            });
+            msgListEl.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
