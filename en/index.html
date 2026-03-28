@@ -1,236 +1,87 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>简易留言板</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: "Microsoft YaHei", sans-serif;
-        }
-        body {
-            background-color: #f5f7fa;
-            padding: 20px;
-        }
-        .container {
-            max-width: 700px;
-            margin: 0 auto;
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
-        }
-        .title {
-            text-align: center;
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 24px;
-        }
-        /* 评论输入区域 */
-        .comment-box {
-            margin-bottom: 30px;
-        }
-        .name-input {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-        .content-input {
-            width: 100%;
-            height: 100px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            resize: none;
-            font-size: 14px;
-            margin-bottom: 10px;
-        }
-        .submit-btn {
-            padding: 8px 20px;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            float: right;
-        }
-        .submit-btn:hover {
-            background: #0056b3;
-        }
-        /* 评论列表 */
-        .comment-list {
-            clear: both;
-            margin-top: 20px;
-        }
-        .comment-item {
-            padding: 15px;
-            border-bottom: 1px solid #eee;
-            margin-bottom: 10px;
-        }
-        .comment-name {
-            font-weight: bold;
-            color: #007bff;
-            margin-bottom: 5px;
-        }
-        .comment-time {
-            color: #999;
-            font-size: 12px;
-            margin-left: 10px;
-        }
-        .comment-content {
-            color: #333;
-            line-height: 1.5;
-            margin-bottom: 8px;
-        }
-        .reply-btn {
-            color: #007bff;
-            font-size: 12px;
-            cursor: pointer;
-            background: none;
-            border: none;
-            padding: 0;
-        }
-        .reply-box {
-            margin-top: 10px;
-            padding-left: 20px;
-        }
-        .reply-input {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 8px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-        }
-        .reply-submit {
-            padding: 4px 10px;
-            background: #6c757d;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            float: right;
-        }
-        .empty-tip {
-            text-align: center;
-            color: #999;
-            padding: 30px 0;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>公共留言板</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;font-family:Microsoft YaHei,sans-serif}
+  body{background:#f5f7fa;padding:20px}
+  .container{max-width:700px;margin:40px auto;background:#fff;padding:30px;border-radius:16px;box-shadow:0 4px 15px rgba(0,0,0,0.06)}
+  .title{text-align:center;font-size:24px;margin-bottom:10px}
+  .tip{text-align:center;color:#666;margin-bottom:30px}
+  .input-area{margin-bottom:20px}
+  input,textarea{width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;margin-bottom:10px;font-size:14px}
+  textarea{height:110px;resize:none}
+  #submitBtn{width:100%;padding:12px;background:#007bff;color:white;border:none;border-radius:8px;font-size:16px;cursor:pointer}
+  #submitBtn:hover{background:#0056b3}
+  .comments{margin-top:30px}
+  .comment{padding:15px 0;border-bottom:1px solid #eee}
+  .comment-title{font-weight:bold;color:#007bff;margin-bottom:5px}
+  .comment-time{color:#999;font-size:12px;margin-left:8px}
+  .comment-content{line-height:1.6;margin-bottom:8px}
+  .empty{text-align:center;color:#999;padding:30px 0}
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1 class="title">简易留言板</h1>
+<div class="container">
+  <h2 class="title">公共留言板</h2>
+  <p class="tip">数据存储在 GitHub 云端，所有人可见可回复</p>
 
-        <!-- 评论发表框（一眼就能看到） -->
-        <div class="comment-box">
-            <input type="text" class="name-input" id="username" placeholder="请输入你的昵称">
-            <textarea class="content-input" id="content" placeholder="请输入留言内容..."></textarea>
-            <button class="submit-btn" id="postBtn">发表评论</button>
+  <div class="input-area">
+    <input type="text" id="title" placeholder="留言标题（简单写一句即可）">
+    <textarea id="body" placeholder="写下你的留言..."></textarea>
+    <button id="submitBtn">发表留言（发布到 GitHub）</button>
+  </div>
+
+  <div class="comments" id="comments">
+    <div class="empty">加载中...</div>
+  </div>
+</div>
+
+<script>
+  // 你的 GitHub 信息
+  const USER = "jianjian-15";
+  const REPO = "my";
+
+  window.onload = loadComments;
+
+  // 读取 GitHub Issues（留言存在这里）
+  async function loadComments() {
+    const res = await fetch(`https://api.github.com/repos/${USER}/${REPO}/issues`);
+    const issues = await res.json();
+    const cmtEl = document.getElementById("comments");
+
+    if (!issues || issues.length === 0) {
+      cmtEl.innerHTML = `<div class="empty">暂无留言，快来抢沙发</div>`;
+      return;
+    }
+
+    let html = "";
+    issues.forEach(issue => {
+      const time = new Date(issue.created_at).toLocaleString();
+      html += `
+        <div class="comment">
+          <div class="comment-title">${issue.title} <span class="comment-time">${time}</span></div>
+          <div class="comment-content">${issue.body || "无内容"}</div>
+          <a href="${issue.html_url}" target="_blank" style="color:#007bff;font-size:14px">前往 GitHub 回复</a>
         </div>
+      `;
+    });
+    cmtEl.innerHTML = html;
+  }
 
-        <!-- 评论列表 -->
-        <div class="comment-list" id="commentList">
-            <div class="empty-tip">快来发表第一条评论吧~</div>
-        </div>
-    </div>
-
-    <script>
-        const STORAGE_KEY = 'comments_data';
-        const usernameEl = document.getElementById('username');
-        const contentEl = document.getElementById('content');
-        const postBtnEl = document.getElementById('postBtn');
-        const commentListEl = document.getElementById('commentList');
-
-        // 初始化
-        window.onload = renderComments;
-
-        // 发表评论
-        postBtnEl.onclick = () => {
-            const name = usernameEl.value.trim();
-            const content = contentEl.value.trim();
-            if (!name || !content) {
-                alert('昵称和内容都不能为空！');
-                return;
-            }
-            const comments = getComments();
-            comments.unshift({
-                id: Date.now(),
-                name,
-                content,
-                time: new Date().toLocaleString(),
-                replies: []
-            });
-            saveComments(comments);
-            usernameEl.value = '';
-            contentEl.value = '';
-            renderComments();
-        };
-
-        // 获取评论
-        function getComments() {
-            return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-        }
-
-        // 保存评论
-        function saveComments(comments) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(comments));
-        }
-
-        // 渲染评论
-        function renderComments() {
-            const comments = getComments();
-            if (comments.length === 0) {
-                commentListEl.innerHTML = '<div class="empty-tip">快来发表第一条评论吧~</div>';
-                return;
-            }
-            let html = '';
-            comments.forEach(cmt => {
-                html += `
-                <div class="comment-item">
-                    <div class="comment-name">${cmt.name}<span class="comment-time">${cmt.time}</span></div>
-                    <div class="comment-content">${cmt.content}</div>
-                    <button class="reply-btn" onclick="toggleReply(${cmt.id})">回复</button>
-                    <div class="reply-box" id="reply-box-${cmt.id}" style="display:none">
-                        <input type="text" class="reply-input" id="reply-input-${cmt.id}" placeholder="回复内容...">
-                        <button class="reply-submit" onclick="postReply(${cmt.id})">发送回复</button>
-                    </div>
-                </div>`;
-            });
-            commentListEl.innerHTML = html;
-        }
-
-        // 切换回复框显示
-        window.toggleReply = (id) => {
-            const box = document.getElementById(`reply-box-${id}`);
-            box.style.display = box.style.display === 'none' ? 'block' : 'none';
-        };
-
-        // 发表回复
-        window.postReply = (id) => {
-            const input = document.getElementById(`reply-input-${id}`);
-            const text = input.value.trim();
-            if (!text) {
-                alert('回复内容不能为空！');
-                return;
-            }
-            const comments = getComments();
-            const cmt = comments.find(c => c.id === id);
-            if (cmt) {
-                cmt.replies.push({
-                    name: '游客',
-                    content: text,
-                    time: new Date().toLocaleString()
-                });
-                saveComments(comments);
-                renderComments();
-            }
-        };
-    </script>
+  // 发表留言（跳转到 GitHub 新建 Issue，安全不泄露Token）
+  document.getElementById("submitBtn").onclick = () => {
+    const title = document.getElementById("title").value.trim();
+    const body = document.getElementById("body").value.trim();
+    if (!title || !body) {
+      alert("标题和内容都要填哦");
+      return;
+    }
+    const url = `https://github.com/${USER}/${REPO}/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`;
+    window.open(url, "_blank");
+  };
+</script>
 </body>
 </html>
