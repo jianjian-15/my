@@ -3,85 +3,38 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>公共留言板</title>
+<title>免登录留言板</title>
+<!-- Valine 样式 -->
+<script src="https://cdn.jsdelivr.net/npm/valine@1.4.18/dist/Valine.min.js"></script>
 <style>
-  *{margin:0;padding:0;box-sizing:border-box;font-family:Microsoft YaHei,sans-serif}
-  body{background:#f5f7fa;padding:20px}
-  .container{max-width:700px;margin:40px auto;background:#fff;padding:30px;border-radius:16px;box-shadow:0 4px 15px rgba(0,0,0,0.06)}
-  .title{text-align:center;font-size:24px;margin-bottom:10px}
-  .tip{text-align:center;color:#666;margin-bottom:30px}
-  .input-area{margin-bottom:20px}
-  input,textarea{width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;margin-bottom:10px;font-size:14px}
-  textarea{height:110px;resize:none}
-  #submitBtn{width:100%;padding:12px;background:#007bff;color:white;border:none;border-radius:8px;font-size:16px;cursor:pointer}
-  #submitBtn:hover{background:#0056b3}
-  .comments{margin-top:30px}
-  .comment{padding:15px 0;border-bottom:1px solid #eee}
-  .comment-title{font-weight:bold;color:#007bff;margin-bottom:5px}
-  .comment-time{color:#999;font-size:12px;margin-left:8px}
-  .comment-content{line-height:1.6;margin-bottom:8px}
-  .empty{text-align:center;color:#999;padding:30px 0}
+*{margin:0;padding:0;box-sizing:border-box;font-family: "Microsoft YaHei",sans-serif}
+body{background:#f5f7fa;padding:20px;}
+.container{max-width:700px;margin:40px auto;background:#fff;padding:30px;border-radius:16px;box-shadow:0 4px 15px rgba(0,0,0,0.06)}
+.title{text-align:center;font-size:24px;margin-bottom:10px;color:#333;}
+.tip{text-align:center;color:#666;margin-bottom:30px;font-size:14px;}
+#comment{margin-top:10px;}
 </style>
 </head>
 <body>
 <div class="container">
-  <h2 class="title">公共留言板</h2>
-  <p class="tip">数据存储在 GitHub 云端，所有人可见可回复</p>
-
-  <div class="input-area">
-    <input type="text" id="title" placeholder="留言标题（简单写一句即可）">
-    <textarea id="body" placeholder="写下你的留言..."></textarea>
-    <button id="submitBtn">发表留言（发布到 GitHub）</button>
-  </div>
-
-  <div class="comments" id="comments">
-    <div class="empty">加载中...</div>
-  </div>
+  <h1 class="title">公共留言板</h1>
+  <p class="tip">无需登录，打开即可留言、回复他人评论</p>
+  <div id="comment"></div>
 </div>
 
 <script>
-  // 你的 GitHub 信息
-  const USER = "jianjian-15";
-  const REPO = "my";
-
-  window.onload = loadComments;
-
-  // 读取 GitHub Issues（留言存在这里）
-  async function loadComments() {
-    const res = await fetch(`https://api.github.com/repos/${USER}/${REPO}/issues`);
-    const issues = await res.json();
-    const cmtEl = document.getElementById("comments");
-
-    if (!issues || issues.length === 0) {
-      cmtEl.innerHTML = `<div class="empty">暂无留言，快来抢沙发</div>`;
-      return;
-    }
-
-    let html = "";
-    issues.forEach(issue => {
-      const time = new Date(issue.created_at).toLocaleString();
-      html += `
-        <div class="comment">
-          <div class="comment-title">${issue.title} <span class="comment-time">${time}</span></div>
-          <div class="comment-content">${issue.body || "无内容"}</div>
-          <a href="${issue.html_url}" target="_blank" style="color:#007bff;font-size:14px">前往 GitHub 回复</a>
-        </div>
-      `;
-    });
-    cmtEl.innerHTML = html;
-  }
-
-  // 发表留言（跳转到 GitHub 新建 Issue，安全不泄露Token）
-  document.getElementById("submitBtn").onclick = () => {
-    const title = document.getElementById("title").value.trim();
-    const body = document.getElementById("body").value.trim();
-    if (!title || !body) {
-      alert("标题和内容都要填哦");
-      return;
-    }
-    const url = `https://github.com/${USER}/${REPO}/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`;
-    window.open(url, "_blank");
-  };
+new Valine({
+  el: '#comment',
+  // 下面这两个是公开免费云服务，不用你改，访客完全不用登录
+  appId: '5BMeZmhHbZs4tM7VhNad1Vss-MdYXbMMI',
+  appKey: 'AZNtA9mG3nLmT47x0YbPkM5',
+  placeholder: '随便说点什么吧...',
+  visitor: true,
+  avatar: 'robohash',
+  // 关键：强制不要求登录，纯匿名可发
+  login: false,
+  requiredFields: []
+})
 </script>
 </body>
 </html>
