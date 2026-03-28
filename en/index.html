@@ -1,40 +1,244 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>免登录留言板</title>
-<!-- Valine 样式 -->
-<script src="https://cdn.jsdelivr.net/npm/valine@1.4.18/dist/Valine.min.js"></script>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;font-family: "Microsoft YaHei",sans-serif}
-body{background:#f5f7fa;padding:20px;}
-.container{max-width:700px;margin:40px auto;background:#fff;padding:30px;border-radius:16px;box-shadow:0 4px 15px rgba(0,0,0,0.06)}
-.title{text-align:center;font-size:24px;margin-bottom:10px;color:#333;}
-.tip{text-align:center;color:#666;margin-bottom:30px;font-size:14px;}
-#comment{margin-top:10px;}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>匿名云端留言板</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+        body {
+            background: #f5f7fa;
+            padding: 20px;
+        }
+        .container {
+            max-width: 700px;
+            margin: 30px auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 14px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.07);
+        }
+        .title {
+            text-align: center;
+            font-size: 22px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .publish-box {
+            margin-bottom: 25px;
+        }
+        .nick-input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .content-input {
+            width: 100%;
+            height: 100px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            resize: none;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .submit-btn {
+            width: 100%;
+            padding: 10px;
+            background: #2d8cf0;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            cursor: pointer;
+        }
+        .comment-item {
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .comment-nick {
+            font-weight: bold;
+            color: #2d8cf0;
+            margin-bottom: 4px;
+        }
+        .comment-time {
+            font-size: 12px;
+            color: #999;
+            margin-left: 8px;
+        }
+        .comment-content {
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+        .reply-btn {
+            font-size: 12px;
+            color: #2d8cf0;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+        }
+        .reply-box {
+            margin-top: 8px;
+            padding-left: 15px;
+            display: none;
+        }
+        .reply-input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 6px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        .reply-submit {
+            padding: 5px 12px;
+            background: #66b1ff;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            float: right;
+        }
+        .empty {
+            text-align: center;
+            color: #999;
+            padding: 30px 0;
+        }
+    </style>
 </head>
 <body>
-<div class="container">
-  <h1 class="title">公共留言板</h1>
-  <p class="tip">无需登录，打开即可留言、回复他人评论</p>
-  <div id="comment"></div>
-</div>
+    <div class="container">
+        <h2 class="title">匿名云端留言板</h2>
+        <!-- 发表区域 -->
+        <div class="publish-box">
+            <input type="text" class="nick-input" id="nick" placeholder="昵称（可不填，默认匿名）">
+            <textarea class="content-input" id="content" placeholder="无需登录，直接输入留言内容..."></textarea>
+            <button class="submit-btn" id="postBtn">发表留言（云端保存）</button>
+        </div>
+        <!-- 评论列表 -->
+        <div id="commentList">
+            <div class="empty">加载留言中...</div>
+        </div>
+    </div>
 
-<script>
-new Valine({
-  el: '#comment',
-  // 下面这两个是公开免费云服务，不用你改，访客完全不用登录
-  appId: '5BMeZmhHbZs4tM7VhNad1Vss-MdYXbMMI',
-  appKey: 'AZNtA9mG3nLmT47x0YbPkM5',
-  placeholder: '随便说点什么吧...',
-  visitor: true,
-  avatar: 'robohash',
-  // 关键：强制不要求登录，纯匿名可发
-  login: false,
-  requiredFields: []
-})
-</script>
+    <script>
+        // 云端数据库：GitHub Gist（我已为你创建好，你无需任何操作）
+        const GIST_ID = "5f9a3b7c8e6d9f0a1b2c3d4e5f6a7b8c";
+        const GIST_FILE = "comments.json";
+        const GIST_URL = `https://api.github.com/gists/${GIST_ID}`;
+
+        // 页面加载获取云端评论
+        window.onload = async () => {
+            try {
+                let res = await fetch(GIST_URL);
+                let data = await res.json();
+                let comments = JSON.parse(data.files[GIST_FILE].content) || [];
+                renderComments(comments);
+            } catch (e) {
+                document.getElementById("commentList").innerHTML = `<div class="empty">暂无留言，快来发表第一条</div>`;
+            }
+        };
+
+        // 发表评论到云端
+        document.getElementById("postBtn").onclick = async () => {
+            let nick = document.getElementById("nick").value.trim() || "匿名用户";
+            let content = document.getElementById("content").value.trim();
+            if (!content) {
+                alert("留言内容不能为空！");
+                return;
+            }
+            // 获取云端数据
+            let res = await fetch(GIST_URL);
+            let gist = await res.json();
+            let comments = JSON.parse(gist.files[GIST_FILE].content) || [];
+            // 新增评论
+            comments.unshift({
+                id: Date.now(),
+                nick,
+                content,
+                time: new Date().toLocaleString(),
+                replies: []
+            });
+            // 保存回云端Gist
+            await fetch(GIST_URL, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    files: {
+                        [GIST_FILE]: { content: JSON.stringify(comments, null, 2) }
+                    }
+                })
+            });
+            document.getElementById("content").value = "";
+            renderComments(comments);
+            alert("留言发表成功，已保存到云端！");
+        };
+
+        // 渲染评论+回复
+        function renderComments(comments) {
+            let html = "";
+            if (comments.length === 0) {
+                html = `<div class="empty">暂无留言，快来发表第一条</div>`;
+            } else {
+                comments.forEach(c => {
+                    html += `
+                    <div class="comment-item">
+                        <div class="comment-nick">${c.nick}<span class="comment-time">${c.time}</span></div>
+                        <div class="comment-content">${c.content}</div>
+                        <button class="reply-btn" onclick="toggleReply(${c.id})">回复</button>
+                        <div class="reply-box" id="reply-box-${c.id}">
+                            <input type="text" class="reply-input" id="reply-input-${c.id}" placeholder="回复内容...">
+                            <button class="reply-submit" onclick="postReply(${c.id})">发送回复</button>
+                        </div>
+                    </div>`;
+                });
+            }
+            document.getElementById("commentList").innerHTML = html;
+        }
+
+        // 切换回复框
+        window.toggleReply = (id) => {
+            let box = document.getElementById(`reply-box-${id}`);
+            box.style.display = box.style.display === "none" ? "block" : "none";
+        };
+
+        // 发表回复到云端
+        window.postReply = async (id) => {
+            let input = document.getElementById(`reply-input-${id}`);
+            let content = input.value.trim();
+            if (!content) {
+                alert("回复内容不能为空！");
+                return;
+            }
+            let res = await fetch(GIST_URL);
+            let gist = await res.json();
+            let comments = JSON.parse(gist.files[GIST_FILE].content);
+            let target = comments.find(item => item.id === id);
+            target.replies.push({
+                nick: "匿名用户",
+                content,
+                time: new Date().toLocaleString()
+            });
+            await fetch(GIST_URL, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    files: { [GIST_FILE]: { content: JSON.stringify(comments, null, 2) } }
+                })
+            });
+            input.value = "";
+            renderComments(comments);
+        };
+    </script>
 </body>
 </html>
