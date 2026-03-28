@@ -3,75 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>公共云端留言板</title>
-    <!-- 引入Gitalk样式 -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+    <title>公共留言板（可回复评论）</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@waline/client@3/dist/waline.css">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: "Microsoft YaHei", sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
         body {
-            background-color: #f5f7fa;
+            background: #f3f4f6;
             padding: 20px;
         }
         .container {
-            max-width: 800px;
+            max-width: 750px;
             margin: 0 auto;
             background: white;
             padding: 30px;
             border-radius: 12px;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
         }
         .title {
             text-align: center;
-            color: #333;
-            margin-bottom: 30px;
-            font-size: 26px;
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #222;
         }
-        .desc {
+        .tips {
             text-align: center;
             color: #666;
             margin-bottom: 30px;
             font-size: 14px;
         }
-        /* Gitalk留言区样式 */
-        #gitalk-container {
-            width: 100%;
+        #waline {
             margin-top: 20px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1 class="title">公共留言板</h1>
-        <!-- Gitalk留言挂载区域 -->
-        <div id="gitalk-container"></div>
+        <div class="title">公共留言板</div>
+        <div class="tips">可直接留言，可回复他人评论，数据云端存储</div>
+        <div id="waline"></div>
     </div>
 
-    <!-- 引入Gitalk脚本 -->
-    <script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
-    <script>
-        // ========== 仅需修改这4处信息 ==========
-        const clientID = "Ov23lisVGIcmPC9mMy3U";
-        const clientSecret = "3b2c64c85c974a0a773b53a34ee8ae863c3c3570";
-        const repo = "my";
-        const owner = "jianjian-15";
-        // ======================================
-
-        // 初始化Gitalk留言插件
-        const gitalk = new Gitalk({
-            clientID: clientID,
-            clientSecret: clientSecret,
-            repo: repo,
-            owner: owner,
-            admin: [owner],
-            id: location.pathname,
-            distractionFreeMode: false
-        });
-        gitalk.render('gitalk-container');
+    <script type="module">
+        import { init } from 'https://cdn.jsdelivr.net/npm/@waline/client@3/dist/waline.mjs'
+        init({
+            el: '#waline',
+            serverURL: 'https://my-five-lemon.vercel.app/',
+            lang: 'zh-CN',
+            requiredMeta: ['nick'],
+            login: 'disable'
+        })
     </script>
 </body>
 </html>
